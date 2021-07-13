@@ -30,24 +30,34 @@ from django.contrib.auth.models import User
 #         instance.save()
 #         return instance
 
-class SnippetSerializer(serializers.ModelSerializer):
-    class Meta:
-        owner = serializers.ReadOnlyField(source='owner.username')
-        model = Snippet
-        fields = ['id', 'title', 'code', 'linenos', 'language', 'style', 'owner', 'highlighted']
+# class SnippetSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         owner = serializers.ReadOnlyField(source='owner.username')
+#         model = Snippet
+#         fields = ['id', 'title', 'code', 'linenos', 'language', 'style', 'owner', 'highlighted']
 
-#user serializer
-class UserSerializer(serializers.ModelSerializer):
-    snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
+# #user serializer
+# class UserSerializer(serializers.ModelSerializer):
+#     snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
+
+#     class Meta:
+#         model = User
+#         fields = ['id', 'username', 'snippets']
+
+#using HyperlinkeIdentifyField
+
+class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    highlight = serializers.HyperlinkedIdentityField(view_name='snippet-highlight', format='html')
+
+    class Meta:
+        model = Snippet
+        fields = ['url', 'id', 'highlight', 'owner', 'title', 'code', 'linenos', 'language', 'style']
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    snippets = serializers.HyperlinkedIdentityField(many=True, view_name='snippet-detail', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'snippets']
-    # def update(self, instance):
-    #     instance.snippets_id = snippets.id
-    #     return instance;
-    # def to_representation(self, value):
-    #     data = super().to_representation(value)
-    #     mode_serializer = UserSerializer(value.snippets)
-    #     data['snippets'] = mode_serializer.data
-    #     return data
+        fields = ['url', 'id', 'username', 'snippets']
+
